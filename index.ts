@@ -4,7 +4,7 @@ const root = document.getElementById("root");
 const h1 = document.createElement('h1');
 h1.innerHTML = "hello world"
 root.appendChild(h1);
-import { range, using, interval, combineLatest, from, fromEvent } from 'rxjs';
+import { range, using, interval, combineLatest, from, fromEvent, forkJoin, of } from 'rxjs';
 import { startWith, take, scan, map, pluck, filter, tap, flatMap, switchMap } from 'rxjs/operators';
 
 
@@ -103,3 +103,16 @@ import { startWith, take, scan, map, pluck, filter, tap, flatMap, switchMap } fr
 //  const numbers2$ = from ([1, 2, 3]);
 //  const combined2$ = combineLatest(letters2$, numbers2$).pipe(take(4)).subscribe(subscriber()(10))
 
+/**
+ * forkJoin vs combinelatest
+ */
+
+//  forkJoin(
+//    of(42),
+//    interval(1000).pipe(take(5))
+//  ).subscribe(subscriber(()=>console.log("forkJoin"))(10))
+
+//  combineLatest(
+//    of(42),
+//    interval(1000).pipe(take(5))
+//  ).subscribe(subscriber(() => console.log('combineLatest'))(10))
