@@ -132,7 +132,13 @@ class Transaction {
   constructor(public name: string, public type: string, public amount: number, public from: string, public to: string = null){
   }
 }
-
+const write$ = db => tx => of(tx).pipe(
+  timestamp(),
+  map(obj => ({...obj.value, date: obj.timestamp})),
+  tap(log('Processing transaction of')),
+  mergeMap(datedTx => from(db.post(datedTx)))
+)
+txDb.on('error', function (err) { console.log(err); });
 // function getTransactionsArray() {
 //   return [
 //     new Transaction('lim', 'withdraw', 500, 'checking'),
@@ -147,13 +153,7 @@ class Transaction {
 //   },
 //   reduce: '_count'
 // };
-const write$ = db => tx => of(tx).pipe(
-  timestamp(),
-  map(obj => ({...obj.value, date: obj.timestamp})),
-  tap(log('Processing transaction of')),
-  mergeMap(datedTx => from(db.post(datedTx)))
-)
-txDb.on('error', function (err) { console.log(err); });
+
 // from(getTransactionsArray()).pipe(
 //   switchMap(write$(txDb)),
 //   flatMap(() => from(txDb.query(count, {reduce: true})))
@@ -173,42 +173,49 @@ txDb.on('error', function (err) { console.log(err); });
 // }).catch(function (err) {
 //   // error occurred
 // })
-interface AccountType {
-  _id: string;
-  name: string;
-  type: string;
-  balance: number;
-}
-class Account {
-  constructor(private _id: string, private name: string, private type: string, private balance: number) {}
-  get id() {
-    return this._id;
-  }
-}
+// interface AccountType {
+//   _id: string;
+//   name: string;
+//   type: string;
+//   balance: number;
+// }
+// class Account {
+//   constructor(private _id: string, private name: string, private type: string, private balance: number) {}
+//   get id() {
+//     return this._id;
+//   }
+// }
 
-const accounts = [
-  new Account('1', 'Emmet Brown', 'savings', 1000),
-  new Account('2', 'Emmet Brown', 'checking', 2000),
-  new Account('3', 'Emmet Brown', 'CD', 20000),
-];
+// const accounts = [
+//   new Account('1', 'Emmet Brown', 'savings', 1000),
+//   new Account('2', 'Emmet Brown', 'checking', 2000),
+//   new Account('3', 'Emmet Brown', 'CD', 20000),
+// ];
 
-const accountsDb = new PouchDB('accounts');
-// from(accounts).pipe(
-//   switchMap(write$(accountsDb)),
-// ).subscribe(subscriber()(10))
-function withdraw$({name, accountId, type, amount}) {
-  return from(accountsDb.get(accountId)).pipe(
-    tap((doc: any) => console.log(doc.balance < amount ? `Warn this Operation will cause overdraft` : `Sufficient funds`)),
-    flatMap((doc:any) => from(accountsDb.put({
-      _id: doc._id,
-      _rev: doc._rev,
-      balance: doc.balance - amount
-    }))),
-    filter(res => res.ok),
-    tap(() => console.log('Withdraw succeeded. Creating transaction document')),
-    concatMap(() => write$(accountsDb)(new Transaction(name, 'withdraw', amount, type)))
-  )
-}
-withdraw$({
-  name: 'lim', accountId: '3', type: 'checking', amount: 1000
-}).subscribe(subscriber()(10))
+// const accountsDb = new PouchDB('accounts');
+// // from(accounts).pipe(
+// //   switchMap(write$(accountsDb)),
+// // ).subscribe(subscriber()(10))
+// function withdraw$({name, accountId, type, amount}) {
+//   return from(accountsDb.get(accountId)).pipe(
+//     tap((doc: any) => console.log(doc.balance < amount ? `Warn this Operation will cause overdraft` : `Sufficient funds`)),
+//     flatMap((doc:any) => from(accountsDb.put({
+//       _id: doc._id,
+//       _rev: doc._rev,
+//       balance: doc.balance - amount
+//     }))),
+//     filter(res => res.ok),
+//     tap(() => console.log('Withdraw succeeded. Creating transaction document')),
+//     concatMap(() => write$(accountsDb)(new Transaction(name, 'withdraw', amount, type)))
+//   )
+// }
+// withdraw$({
+//   name: 'lim', accountId: '3', type: 'checking', amount: 1000
+// }).subscribe(subscriber()(10))
+
+
+/**
+ * Error handling in rxjs
+ */
+
+ 
